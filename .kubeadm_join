@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-sudo swapoff -a
-sudo kubeadm join 10.0.0.164:6443   --token 911sec.tigerasecure24ee   --discovery-token-ca-cert-hash sha256:94e1b17707c8af69e44c7957de623af70263e8e8711eae41a2fdc345a0973f19
