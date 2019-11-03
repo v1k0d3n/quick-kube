@@ -16,7 +16,7 @@ function resetKubeadmHost() {
   if [[ "${worker}" == "true" ]]; then
     source "${HOME}/.lab/000-environment"
   else
-    source "./000-environment"
+    source "${LABDIR}/000-environment"
   fi
   setColorOpts
   sudo kubeadm reset -f
