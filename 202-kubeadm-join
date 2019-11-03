@@ -4,7 +4,7 @@ source "$LABDIR"/config/calico.cfg
 
 function joinKubeadmWorkers() {
   kubeadm_hash=$(openssl x509 -in /etc/kubernetes/pki/ca.crt -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
-  source ./000-environment
+  source "${LABDIR}"/000-environment
   setColorOpts
 
   # Prepare workers:
