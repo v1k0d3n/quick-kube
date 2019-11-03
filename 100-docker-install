@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+function checkDockerVersion() {
+  docker_status="$(echo $(sudo dpkg -l | grep 'docker-ce ' | awk '{ print $1 }'))"
+  if [[ "${docker_status}" == "ii" ]]; then
+    export docker_installed="true"
+  elif 
+  [[ "${docker_status}" == "rc" ]]; then
+    export docker_installed="false"
+  else 
+    export docker_installed="false"
+  fi
+}
+
+function installDocker() {
+  if [[ "${docker_installed:-"true"}" == "false" ]]; then
+    echo 'Docker install flag set. Installing docker-ce now!'
+    sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+    ### Add Docker’s official GPG key:
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    ### Add Docker apt repository:
+    sudo add-apt-repository \
+      "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) \
+      stable"
+    ## Install Docker CE:
+    sudo apt-get update && sudo apt-get install -y docker-ce=${VERSION_DOCKER}
+    # Setup the docker daemon for Kubernetes 1.12+:
+    cat <<-EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+    # Ensure docker systemd unit directory exists:
+    sudo mkdir -p /etc/systemd/system/docker.service.d
+    # Restart docker:
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+  else 
+    echo 'Docker is already installed on this system. Nothing to do!'
+  fi
+}
+
+# Run functions in order:
+checkDockerVersion
+installDocker

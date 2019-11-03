@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+function checkSystemLocation() {
+  reset_location="${HOME}/.lab/000-environment"
+  if test -f "$reset_location"; then
+    export worker="true"
+  else
+    export worker="false"
+  fi
+}
+
+function resetKubeadmHost() {
+  checkSystemLocation
+  if [[ "${worker}" == "true" ]]; then
+    source "${HOME}/.lab/000-environment"
+  else
+    source "./000-environment"
+  fi
+  setColorOpts
+  sudo kubeadm reset -f
+  sudo iptables -F
+  sudo iptables -t nat -F
+  sudo iptables -t mangle -F
+  sudo iptables -X
+  sudo ipvsadm --clear
+  printf "${BOLD_RED}$(hostname) has been removed from the Kubernetes cluster! \n"
+}
+
+resetKubeadmHost

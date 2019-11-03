@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+# Color Definitions:
+function setColorOpts() {
+  export CLEAR='\033[0m'
+  export RED='\033[31m'
+  export GREEN='\033[32m'
+  export YELLOW='\033[33m'
+  export BOLD_RED='\033[1m\033[31m'
+  export BOLD_GREEN='\033[1m\033[32m'
+  export BOLD_YELLOW='\033[1m\033[33m'
+}
+
+function setSshOpts() {
+  export setsshopts="-tq -o StrictHostKeyChecking=no -o HostKeyAlgorithms=ssh-ed25519"
+}
+
+function syncLabHosts() {
+  for i in "${KUBEADM_HOSTS[@]}"; do
+    ssh ${setsshopts:?} ${i} -t "sudo mkdir -p ${HOME}/.lab && sudo chown -R \$(whoami):\$(whoami) ${HOME}/.lab"
+    ssh ${setsshopts:?} ${i} -t "rm -rf ${HOME}/.lab/*"
+    rsync -q -e "ssh ${setsshopts}" -vr "${LABDIR:?}" ${USER:?}@${i}:/tmp
+    ssh ${setsshopts:?} ${i} -t "mv /tmp/environment-setup/* ${HOME}/.lab/"
+  done
+}

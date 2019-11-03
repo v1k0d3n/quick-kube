@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+function checkKubeadmVersion() {
+  kubeadm_version="$(kubeadm version -o short)"
+  if [[ "${kubeadm_version}" == "v${VERSION_KUBE}" ]]; then
+    export kubeadm_installed="true"
+  else
+    export kubeadm_installed="false"
+  fi
+}
+
+function installKubeadm() {
+  if [[ "${kubeadm_installed}" == "true" ]]; then
+    echo 'Kubeadm version "'v${VERSION_KUBE}'" is a match! Nothing to do.'
+  else
+   echo 'Kubeadm version "'v${VERSION_KUBE}'" is not a match! Installing Kubeadm "'v${VERSION_KUBE}'".'
+    # Install pre-requisites:
+    sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+
+    # Add Kubernetes official GPG key:
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+    # Add Kubernetes apt repository:
+    cat << EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+    # Update apt for new repository additions:
+    sudo apt-get update
+
+    # Install requested Kubeadm binaries:
+    sudo apt-get install -y kubelet=${VERSION_KUBE_PKG} kubeadm=${VERSION_KUBE_PKG} kubectl=${VERSION_KUBE_PKG}
+
+    # Pin Kubeadm versions to prevent unknown upgrade issues:
+    sudo apt-mark hold kubelet kubeadm kubectl
+
+    # Turn off swap for the system:
+    sudo swapoff -a
+    sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+  fi
+}
+
+# Run functions in order:
+checkKubeadmVersion
+installKubeadm

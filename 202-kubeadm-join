@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+function joinKubeadmWorkers() {
+  kubeadm_hash=$(openssl x509 -in /etc/kubernetes/pki/ca.crt -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
+  source ./000-environment
+  setColorOpts
+
+  # Prepare workers:
+  cat << EOF | tee .kubeadm_join
+#!/usr/bin/env bash
+sudo swapoff -a
+sudo kubeadm join ${KUBEADM_MASTER_ADDR}:${KUBEADM_API_PORT} \
+  --token ${KUBEADM_TOKEN} \
+  --discovery-token-ca-cert-hash sha256:${kubeadm_hash}
+EOF
+  chmod +x .kubeadm_join
+  printf " \n"
+  printf "${BOLD_YELLOW}Syncing remote functions. Please wait...${CLEAR} \n"
+  setSshOpts
+  syncLabHosts
+  for i in "${KUBEADM_HOSTS[@]}"; do
+    rsync -v -e "ssh ${setsshopts:?}" .kubeadm_join ${USER}@${i}:${HOME}/.lab/.kubeadm_join
+    ssh ${USER}@${i} '${HOME}/.lab/100-docker-install && ${HOME}/.lab/.kubeadm_join'
+    printf "${BOLD_YELLOW}${i} has been added to the Kubernetes cluster!${CLEAR} \n"
+  done
+}
+
+joinKubeadmWorkers
+setColorOpts
+printf "${BOLD_GREEN}Kubernetes cluster is now ready!${CLEAR} \n"
+printf "${BOLD_GREEN}Summary:${CLEAR} \n"
+kubectl get nodes -o wide

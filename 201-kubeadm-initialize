@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+function pullKubeadmImages() {
+  sudo kubeadm config images pull --kubernetes-version=${VERSION_KUBE} -v=4
+}
+
+function initKubeadmConfig() {
+  mkdir -p ${HOME}/.kube
+  sudo cp -f /etc/kubernetes/admin.conf ${HOME}/.kube/config
+  sudo chown ${USER}:${USER} ${HOME}/.kube/config
+}
+
+function initKubeadmMasterTaint() {
+  # Watch the cluster come up:
+  kubectl taint nodes --all node-role.kubernetes.io/master-
+  printf "kubeadm initialization complete!\n"
+  # kubectl get nodes -o wide -w
+}
+
+function initKubeadmMaster() {
+  # Turn off swap:
+  sudo swapoff -a
+
+  # Pulling kubeadm Images:
+  pullKubeadmImages
+
+  # Bootstrapping the cluster via kubeadm:
+  sudo kubeadm init --kubernetes-version="${VERSION_KUBE}" --pod-network-cidr="${KUBEADM_CIDR_POD}" --service-cidr="${KUBEADM_CIDR_SVC}" "${KUBEADN_INIT_OPTS}" --token ${KUBEADM_TOKEN}
+  sleep 3
+
+  # Replace kubeconfig file:
+  initKubeadmConfig
+
+  # Taint the master:
+  initKubeadmMasterTaint
+}
+
+initKubeadmMaster
