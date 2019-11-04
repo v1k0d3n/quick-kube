@@ -11,7 +11,7 @@ function joinKubeadmWorkers() {
   cat << EOF | tee .kubeadm_join
 #!/usr/bin/env bash
 sudo swapoff -a
-sudo kubeadm join ${KUBEADM_MASTER_ADDR}:${KUBEADM_API_PORT} \
+sudo kubeadm join ${MASTERS}:${KUBEADM_API_PORT} \
   --token ${KUBEADM_TOKEN} \
   --discovery-token-ca-cert-hash sha256:${kubeadm_hash}
 EOF
@@ -20,7 +20,7 @@ EOF
   printf "${BOLD_YELLOW}Syncing remote functions. Please wait...${CLEAR} \n"
   setSshOpts
   syncLabHosts
-  for i in "${KUBEADM_HOSTS[@]}"; do
+  for i in "${WORKERS[@]}"; do
     rsync -v -e "ssh ${setsshopts:?}" .kubeadm_join ${USER}@${i}:${HOME}/.lab/.kubeadm_join
     ssh ${USER}@${i} '${HOME}/.lab/100-install-docker && ${HOME}/.lab/.kubeadm_join'
     printf "${BOLD_YELLOW}${i} has been added to the Kubernetes cluster!${CLEAR} \n"

@@ -15,7 +15,7 @@ function resetKubeadmAll() {
   # Reset each of the workers:
   printf " \n"
   printf "${BOLD_YELLOW}Resetting each of the workers. Please wait...${CLEAR} \n"
-  for i in "${KUBEADM_HOSTS[@]}"; do
+  for i in "${WORKERS[@]}"; do
   printf "${BOLD_YELLOW}Connecting to ${i}...${CLEAR} \n"
     ssh ${setsshopts:?} ${USER}@${i} -t "${HOME}/.lab/900-kubeadm-reset"
   done

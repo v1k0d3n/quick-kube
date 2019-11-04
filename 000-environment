@@ -18,7 +18,7 @@ function setSshOpts() {
 }
 
 function syncLabHosts() {
-  for i in "${KUBEADM_HOSTS[@]}"; do
+  for i in "${WORKERS[@]}"; do
     ssh ${setsshopts:?} ${i} -t "sudo mkdir -p ${HOME}/.lab && sudo chown -R \$(whoami):\$(whoami) ${HOME}/.lab"
     ssh ${setsshopts:?} ${i} -t "rm -rf ${HOME}/.lab/*"
     rsync -q -e "ssh ${setsshopts}" -vr "${LABDIR:?}" ${USER:?}@${i}:/tmp
