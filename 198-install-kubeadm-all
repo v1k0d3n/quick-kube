@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+function resetKubeadmAll() {
+  source "${LABDIR}"/000-environment
+  setColorOpts
+
+  # Prepare workers:
+  printf " \n"
+  printf "${BOLD_YELLOW}Syncing remote functions. Please wait...${CLEAR} \n"
+  setSshOpts
+  syncLabHosts
+
+  # Reset each of the workers:
+  printf " \n"
+  printf "${BOLD_YELLOW}Installing kubeadm on each of the worker nodes. Please wait...${CLEAR} \n"
+  for i in "${WORKERS[@]}"; do
+  printf "${BOLD_YELLOW}Connecting to ${i}...${CLEAR} \n"
+    ssh ${setsshopts:?} ${USER}@${i} -t "${HOME}/.lab/101-install-kubeadm"
+  done
+
+  # Reset the master:
+  printf " \n"
+  printf "${BOLD_YELLOW}Installing kubeadm on the master node... ${CLEAR} \n"
+  ${LABDIR}/101-install-kubeadm
+}
+
+resetKubeadmAll
