@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+function uninstallDockerNode() {
+  sudo apt-get remove docker-ce -y
+}
+
+uninstallDockerNode
