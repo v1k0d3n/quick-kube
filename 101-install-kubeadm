@@ -2,6 +2,15 @@
 LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source "$LABDIR"/config/calico.cfg
 
+function checkSystemLocation() {
+  reset_location="${HOME}/.lab/000-environment"
+  if test -f "$reset_location"; then
+    export worker="true"
+  else
+    export worker="false"
+  fi
+}
+
 function checkKubeadmVersion() {
   kubeadm_version="$(kubeadm version -o short)"
   if [[ "${kubeadm_version}" == "v${VERSION_KUBE}" ]]; then
@@ -12,10 +21,17 @@ function checkKubeadmVersion() {
 }
 
 function installKubeadm() {
-  if [[ "${kubeadm_installed}" == "true" ]]; then
-    echo 'Kubeadm version "'v${VERSION_KUBE}'" is a match! Nothing to do.'
+  checkSystemLocation
+  if [[ "${worker}" == "true" ]]; then
+    source "${HOME}/.lab/000-environment"
   else
-   echo 'Kubeadm version "'v${VERSION_KUBE}'" is not a match! Installing Kubeadm "'v${VERSION_KUBE}'".'
+    source "${LABDIR}/000-environment"
+  fi
+  setColorOpts
+  if [[ "${kubeadm_installed}" == "true" ]]; then
+    printf "${BOLD_YELLOW}Kubeadm version v"${VERSION_KUBE}" is a match. Nothing to do!${CLEAR} \n"
+  else
+    printf "${BOLD_YELLOW}Kubeadm version v"${VERSION_KUBE}" is not a match Installing Kubeadm v"${VERSION_KUBE}${CLEAR} \n"!"
     # Install pre-requisites:
     sudo apt-get update && sudo apt-get install -y apt-transport-https curl
 

@@ -37,4 +37,7 @@ function initKubeadmMaster() {
   initKubeadmMasterTaint
 }
 
+source 100-install-docker
+source 101-install-kubeadm
+
 initKubeadmMaster

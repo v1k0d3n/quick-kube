@@ -22,7 +22,7 @@ EOF
   syncLabHosts
   for i in "${KUBEADM_HOSTS[@]}"; do
     rsync -v -e "ssh ${setsshopts:?}" .kubeadm_join ${USER}@${i}:${HOME}/.lab/.kubeadm_join
-    ssh ${USER}@${i} '${HOME}/.lab/100-docker-install && ${HOME}/.lab/.kubeadm_join'
+    ssh ${USER}@${i} '${HOME}/.lab/100-install-docker && ${HOME}/.lab/.kubeadm_join'
     printf "${BOLD_YELLOW}${i} has been added to the Kubernetes cluster!${CLEAR} \n"
   done
 }

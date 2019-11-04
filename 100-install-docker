@@ -2,6 +2,15 @@
 LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source "$LABDIR"/config/calico.cfg
 
+function checkSystemLocation() {
+  reset_location="${HOME}/.lab/000-environment"
+  if test -f "$reset_location"; then
+    export worker="true"
+  else
+    export worker="false"
+  fi
+}
+
 function checkDockerVersion() {
   docker_status="$(echo $(sudo dpkg -l | grep 'docker-ce ' | awk '{ print $1 }'))"
   if [[ "${docker_status}" == "ii" ]]; then
@@ -15,18 +24,29 @@ function checkDockerVersion() {
 }
 
 function installDocker() {
+  checkSystemLocation
+  if [[ "${worker}" == "true" ]]; then
+    source "${HOME}/.lab/000-environment"
+  else
+    source "${LABDIR}/000-environment"
+  fi
+  setColorOpts
   if [[ "${docker_installed:-"true"}" == "false" ]]; then
-    echo 'Docker install flag set. Installing docker-ce now!'
+    printf "${BOLD_YELLOW}Docker install flag set. Installing docker-ce now!${CLEAR} \n"
     sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+
     ### Add Docker’s official GPG key:
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
     ### Add Docker apt repository:
     sudo add-apt-repository \
       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
       $(lsb_release -cs) \
       stable"
+
     ## Install Docker CE:
     sudo apt-get update && sudo apt-get install -y docker-ce=${VERSION_DOCKER}
+
     # Setup the docker daemon for Kubernetes 1.12+:
     cat <<-EOF | sudo tee /etc/docker/daemon.json
 {
@@ -38,13 +58,15 @@ function installDocker() {
   "storage-driver": "overlay2"
 }
 EOF
+
     # Ensure docker systemd unit directory exists:
     sudo mkdir -p /etc/systemd/system/docker.service.d
+
     # Restart docker:
     sudo systemctl daemon-reload
     sudo systemctl restart docker
   else 
-    echo 'Docker is already installed on this system. Nothing to do!'
+    printf "${BOLD_YELLOW}Docker is already installed on this system. Nothing to do!${CLEAR} \n"
   fi
 }
 
