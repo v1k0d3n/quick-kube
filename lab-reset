@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+./999-kubeadm-reset-all ;\
+./998-uninstall-kubeadm-all ;\
+./997-uninstall-docker-all ;\
+./996-cleanup-all ;\
+./995-reboot-all

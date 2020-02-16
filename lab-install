@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+./197-install-docker-all ;\
+./198-install-kubeadm-all ;\
+./201-kubeadm-initialize ;\
+./202-kubeadm-join

@@ -27,7 +27,8 @@ function initKubeadmMaster() {
   pullKubeadmImages
 
   # Bootstrapping the cluster via kubeadm:
-  sudo kubeadm init --kubernetes-version="${VERSION_KUBE}" --pod-network-cidr="${KUBEADM_CIDR_POD}" --service-cidr="${KUBEADM_CIDR_SVC}" "${KUBEADN_INIT_OPTS}" --token ${KUBEADM_TOKEN}
+  # sudo kubeadm init --kubernetes-version="${VERSION_KUBE}" --pod-network-cidr="${KUBEADM_CIDR_POD}" --service-cidr="${KUBEADM_CIDR_SVC}" "${KUBEADN_INIT_OPTS}" --token ${KUBEADM_TOKEN}
+  sudo kubeadm init --config "$LABDIR"/kubeadm/config.yaml
   sleep 3
 
   # Replace kubeconfig file:
