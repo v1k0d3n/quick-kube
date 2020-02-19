@@ -8,13 +8,13 @@ bootstrapTokens:
 ---
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
-clusterName: jinkit-management
-kubernetesVersion: v1.17.0
+clusterName: calico-poc
+kubernetesVersion: v1.17.3
 imageRepository: k8s.gcr.io
 networking:
   dnsDomain: cluster.local
   serviceSubnet: 10.96.0.0/12
-  podSubnet: 10.25.0.0/16
+  podSubnet: 192.168.0.0/16
 dns:
   type: CoreDNS
 apiServer:

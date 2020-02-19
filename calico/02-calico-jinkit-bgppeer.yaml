@@ -1,7 +1,7 @@
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: bgppeer-jinkit-64512
+  name: bgppeer-calico-poc-64512
 spec:
-  peerIP: 192.168.3.2
+  peerIP: 10.22.0.20
   asNumber: 64512
