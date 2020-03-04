@@ -2,5 +2,6 @@
 
 ./197-install-docker-all ;\
 ./198-install-kubeadm-all ;\
+./300-templates-create ;\
 ./201-kubeadm-initialize ;\
 ./202-kubeadm-join

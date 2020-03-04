@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$LABDIR"/config/calico.cfg
+
+function templateCalicoCNI(){
+  source "${LABDIR}"/000-environment
+  setColorOpts
+  rm -rf ${LABDIR}/calico/01-calico.yaml
+  printf "${BOLD_YELLOW}Fetching Manifest: https://docs.projectcalico.org/${CALICO_VERSION}/manifests/calico.yaml${CLEAR} \n"
+  curl -L -o ${LABDIR}/calico/01-calico.yaml https://docs.projectcalico.org/${CALICO_VERSION}/manifests/calico.yaml
+  printf "${BOLD_GREEN}Configuring CALICO_IPV4POOL_CIDR: ${KUBEADM_CIDR_POD}${CLEAR} \n"
+  printf "${BOLD_YELLOW}Creating template: ${LABDIR}/calico/01-calico.yaml \n"
+  sed -i -e 's?192.168.0.0/16?'"$KUBEADM_CIDR_POD"'?g' ${LABDIR}/calico/01-calico.yaml
+  
+}
+
+function templateKubeadmConfig() {
+  source "${LABDIR}"/000-environment
+  setColorOpts
+  # Create Templates:
+  printf "${BOLD_YELLOW}Creating template: ${LABDIR}/kubeadm/kubeadm-config.yaml${CLEAR} \n"
+  cat <<__EOF | tee ${LABDIR}/kubeadm/kubeadm-config.yaml
+---
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: InitConfiguration
+bootstrapTokens:
+- groups:
+  token: ${KUBEADM_TOKEN}
+  ttl: 24h0m0s
+---
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+clusterName: ${KUBEADM_CLUSTER_NAME}
+kubernetesVersion: v${VERSION_KUBE}
+imageRepository: k8s.gcr.io
+networking:
+  dnsDomain: cluster.local
+  serviceSubnet: ${KUBEADM_CIDR_SVC}
+  podSubnet: ${KUBEADM_CIDR_POD}
+dns:
+  type: CoreDNS
+apiServer:
+  certSANs:
+  - 127.0.0.1
+controllerManager: {}
+scheduler: {}
+__EOF
+printf " \n"
+}
+
+
+function templateCalicoBGPPeer() {
+  source "${LABDIR}"/000-environment
+  setColorOpts
+  printf "${BOLD_YELLOW}Creating template: ${LABDIR}/calico/02-calico-bgppeer-primary.yaml${CLEAR} \n"
+  cat <<__EOF | tee ${LABDIR}/calico/02-calico-bgppeer-primary.yaml
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: ${CALICO_BGP_PRIMARY_NAME}
+spec:
+  peerIP: ${CALICO_BGP_PRIMARY_PEER}
+  asNumber: ${CALICO_BGP_PRIMARY_AS}
+__EOF
+printf " \n"
+}
+
+function templateCalicoBGPConfiguration() {
+  source "${LABDIR}"/000-environment
+  setColorOpts
+  printf "${BOLD_YELLOW}Creating template: ${LABDIR}/calico/03-calico-bgpconfiguration.yaml${CLEAR} \n"
+  cat <<__EOF | tee ${LABDIR}/calico/03-calico-bgpconfiguration.yaml
+apiVersion: projectcalico.org/v3
+kind: BGPConfiguration
+metadata:
+  name: default
+spec:
+  serviceClusterIPs:
+  - cidr: ${KUBEADM_CIDR_SVC}
+  serviceExternalIPs:
+  - cidr: ${CALICO_BGP_EXTNET_01}
+  - cidr: ${CALICO_BGP_EXTNET_02}
+__EOF
+printf " \n"
+}
+
+templateCalicoCNI
+templateKubeadmConfig
+templateCalicoBGPPeer
+templateCalicoBGPConfiguration
+setColorOpts
+printf "${BOLD_GREEN}Templates created, and can be located on the master node.${CLEAR} \n"
+printf " \n"
