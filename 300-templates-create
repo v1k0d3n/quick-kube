@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 LABDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source "$LABDIR"/config/calico.cfg
+source "${LABDIR}"/config/calico.cfg
 
 function templateCalicoCNI(){
   source "${LABDIR}"/000-environment
@@ -16,6 +16,7 @@ function templateCalicoCNI(){
 
 function templateKubeadmConfig() {
   source "${LABDIR}"/000-environment
+  mkdir -p "${LABDIR}"/kubeadm
   setColorOpts
   # Create Templates:
   printf "${BOLD_YELLOW}Creating template: ${LABDIR}/kubeadm/kubeadm-config.yaml${CLEAR} \n"
